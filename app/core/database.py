@@ -3,7 +3,7 @@ Database connection and session management.
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from config import settings
+from app.core.config import settings
 
 # Create database engine
 engine = create_engine(
@@ -29,5 +29,5 @@ def get_db():
 
 def init_db():
     """Initialize database tables."""
-    from models import ProtocolSnapshot, ProtocolAlert  # noqa
+    from app.models.models import ProtocolSnapshot, ProtocolAlert  # noqa
     Base.metadata.create_all(bind=engine)

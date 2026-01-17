@@ -461,6 +461,26 @@
             }
         }
 
+        // Resolve alert
+        async function resolveAlert(id) {
+            if (!confirm('Are you sure you want to resolve this alert?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/alerts/${id}/resolve`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    refreshData();
+                } else {
+                    alert('Failed to resolve alert');
+                }
+            } catch (error) {
+                console.error('Error resolving alert:', error);
+                alert('Error resolving alert');
+            }
+        }
+
         // Render protocol cards
         function renderProtocolCards(protocols) {
             const container = document.getElementById('protocolCards');
@@ -597,7 +617,10 @@
                         <div class="alert-title">${alert.protocol_name.toUpperCase()} - ${alert.alert_type.replace('_', ' ')}</div>
                         <div class="alert-message">${alert.message || ''}</div>
                     </div>
-                    <div class="alert-time">${new Date(alert.triggered_at).toLocaleString()}</div>
+                    <div class="alert-actions" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                        <div class="alert-time">${new Date(alert.triggered_at).toLocaleString()}</div>
+                        <button onclick="resolveAlert(${alert.id})" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.1); color: white; cursor: pointer;">Resolve</button>
+                    </div>
                 </div>
             `).join('');
         }

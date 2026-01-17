@@ -3,7 +3,7 @@ SQLAlchemy models for protocol monitoring.
 """
 from sqlalchemy import Column, Integer, String, DECIMAL, DateTime, Text, UniqueConstraint
 from sqlalchemy.sql import func
-from database import Base
+from app.core.database import Base
 
 
 class ProtocolSnapshot(Base):

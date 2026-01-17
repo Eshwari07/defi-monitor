@@ -18,11 +18,11 @@ from typing import List, Tuple, Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
-from database import init_db, SessionLocal
-from models import ProtocolSnapshot
-from fetchers.felix import FelixFetcher
-from fetchers.hlp import HLPFetcher
-from anomaly_detector import AnomalyDetector
+from app.core.database import init_db, SessionLocal
+from app.models.models import ProtocolSnapshot
+from app.services.fetchers.felix import FelixFetcher
+from app.services.fetchers.hlp import HLPFetcher
+from app.services.anomaly_detector import AnomalyDetector
 
 # Configure logging
 logging.basicConfig(

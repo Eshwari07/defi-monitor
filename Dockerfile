@@ -14,6 +14,8 @@ EXPOSE 8000
 
 # Environment variables
 ENV DATABASE_URL=sqlite:///./defi_monitor.db
+ENV PYTHONPATH=/app
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# We use uvicorn directly for production
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

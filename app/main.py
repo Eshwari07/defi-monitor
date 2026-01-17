@@ -18,10 +18,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 
-from database import get_db, init_db
-from models import ProtocolSnapshot, ProtocolAlert
-from schemas import ProtocolStatus, ProtocolHistory, AlertResponse, HealthCheck
-from config import settings
+from app.core.database import get_db, init_db
+from app.models.models import ProtocolSnapshot, ProtocolAlert
+from app.models.schemas import ProtocolStatus, ProtocolHistory, AlertResponse, HealthCheck
+from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(

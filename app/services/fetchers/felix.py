@@ -13,7 +13,7 @@ import logging
 import random
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
-from fetchers.defillama import DeFiLlamaFetcher
+from app.services.fetchers.defillama import DeFiLlamaFetcher
 
 logger = logging.getLogger(__name__)
 
