@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  defi-monitor:
+    build: .
+    container_name: defi-monitor
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./defi_monitor.db:/app/defi_monitor.db
+    environment:
+      - DATABASE_URL=sqlite:///./defi_monitor.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Run ingestion on a schedule
+  ingest-cron:
+    build: .
+    container_name: defi-ingest
+    volumes:
+      - ./defi_monitor.db:/app/defi_monitor.db
+    environment:
+      - DATABASE_URL=sqlite:///./defi_monitor.db
+    command: >
+      sh -c "while true; do python ingest.py; sleep 3600; done"
+    depends_on:
+      - defi-monitor
+    restart: unless-stopped
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: defi-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - defi-monitor
+    restart: unless-stopped
+
+volumes:
+  grafana_data:

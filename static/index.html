@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Protocol Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-primary: #00d9ff;
+            --accent-green: #00ff88;
+            --accent-yellow: #ffcc00;
+            --accent-red: #ff4757;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border-radius: 50px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 217, 255, 0.1);
+        }
+
+        .protocol-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .protocol-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-green));
+        }
+
+        .protocol-card.warning::before {
+            background: linear-gradient(90deg, var(--accent-yellow), #ff9500);
+        }
+
+        .protocol-card.critical::before {
+            background: linear-gradient(90deg, var(--accent-red), #ff6b6b);
+        }
+
+        .protocol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .protocol-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .protocol-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .protocol-status.healthy {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent-green);
+        }
+
+        .protocol-status.warning {
+            background: rgba(255, 204, 0, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .protocol-status.critical {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--accent-red);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-container {
+            grid-column: span 2;
+            height: 400px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .chart-tab.active {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .alerts-section {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-count {
+            background: var(--accent-red);
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-yellow);
+        }
+
+        .alert-item.critical {
+            border-left-color: var(--accent-red);
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .no-alerts {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .no-alerts-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-green));
+            border: none;
+            color: var(--bg-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                grid-column: span 1;
+            }
+            
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <h1>DeFi Protocol Monitor</h1>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span id="lastUpdate">Connecting...</span>
+                </div>
+                <button class="refresh-btn" onclick="refreshData()">↻ Refresh</button>
+            </div>
+        </header>
+
+        <div class="grid" id="protocolCards">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+
+        <div class="grid">
+            <div class="card chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">TVL History</h3>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" onclick="selectProtocol('felix')">Felix</button>
+                        <button class="chart-tab" onclick="selectProtocol('hlp')">HLP</button>
+                    </div>
+                </div>
+                <canvas id="tvlChart"></canvas>
+            </div>
+        </div>
+
+        <div class="alerts-section">
+            <h3 class="section-title">
+                🚨 Active Alerts
+                <span class="alert-count" id="alertCount">0</span>
+            </h3>
+            <div class="alerts-list" id="alertsList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let tvlChart = null;
+        let currentProtocol = 'felix';
+
+        // Format number as currency
+        function formatCurrency(value) {
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+            if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
+            return `$${value.toFixed(2)}`;
+        }
+
+        // Format percentage
+        function formatPercent(value) {
+            return `${value.toFixed(2)}%`;
+        }
+
+        // Fetch protocols data
+        async function fetchProtocols() {
+            try {
+                const response = await fetch(`${API_BASE}/protocols`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching protocols:', error);
+                return [];
+            }
+        }
+
+        // Fetch protocol history
+        async function fetchHistory(protocol, days = 30) {
+            try {
+                const response = await fetch(`${API_BASE}/protocols/${protocol}/history?days=${days}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                return [];
+            }
+        }
+
+        // Fetch alerts
+        async function fetchAlerts() {
+            try {
+                const response = await fetch(`${API_BASE}/alerts?status=open`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching alerts:', error);
+                return [];
+            }
+        }
+
+        // Render protocol cards
+        function renderProtocolCards(protocols) {
+            const container = document.getElementById('protocolCards');
+            
+            if (protocols.length === 0) {
+                container.innerHTML = '<div class="card">No protocols found</div>';
+                return;
+            }
+
+            container.innerHTML = protocols.map(protocol => `
+                <div class="card protocol-card ${protocol.status}">
+                    <div class="protocol-header">
+                        <span class="protocol-name">${protocol.name}</span>
+                        <span class="protocol-status ${protocol.status}">${protocol.status}</span>
+                    </div>
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="metric-value">${protocol.tvl ? formatCurrency(protocol.tvl) : 'N/A'}</div>
+                            <div class="metric-label">Total Value Locked</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">${protocol.apy ? formatPercent(protocol.apy) : 'N/A'}</div>
+                            <div class="metric-label">7-Day APY</div>
+                        </div>
+                        ${protocol.utilization !== null ? `
+                        <div class="metric" style="grid-column: span 2;">
+                            <div class="metric-value">${formatPercent(protocol.utilization * 100)}</div>
+                            <div class="metric-label">Utilization Rate</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render chart
+        async function renderChart(protocol) {
+            const history = await fetchHistory(protocol);
+            const ctx = document.getElementById('tvlChart').getContext('2d');
+
+            const labels = history.map(h => new Date(h.timestamp).toLocaleString());
+            const tvlData = history.map(h => h.tvl);
+            const apyData = history.map(h => h.apy);
+
+            if (tvlChart) {
+                tvlChart.destroy();
+            }
+
+            tvlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'TVL (USD)',
+                            data: tvlData,
+                            borderColor: '#00d9ff',
+                            backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'APY (%)',
+                            data: apyData,
+                            borderColor: '#00ff88',
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#a0a0b0' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#a0a0b0' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            ticks: {
+                                color: '#00d9ff',
+                                callback: value => formatCurrency(value)
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            ticks: {
+                                color: '#00ff88',
+                                callback: value => value.toFixed(1) + '%'
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render alerts
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alertsList');
+            const countEl = document.getElementById('alertCount');
+            
+            countEl.textContent = alerts.length;
+
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="no-alerts">
+                        <div class="no-alerts-icon">✅</div>
+                        <p>All systems healthy. No active alerts.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.severity}">
+                    <div class="alert-icon">${alert.severity === 'critical' ? '🔴' : '🟡'}</div>
+                    <div class="alert-content">
+                        <div class="alert-title">${alert.protocol_name.toUpperCase()} - ${alert.alert_type.replace('_', ' ')}</div>
+                        <div class="alert-message">${alert.message || ''}</div>
+                    </div>
+                    <div class="alert-time">${new Date(alert.triggered_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select protocol for chart
+        function selectProtocol(protocol) {
+            currentProtocol = protocol;
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.toLowerCase() === protocol);
+            });
+            renderChart(protocol);
+        }
+
+        // Refresh all data
+        async function refreshData() {
+            document.getElementById('lastUpdate').textContent = 'Refreshing...';
+            
+            const protocols = await fetchProtocols();
+            renderProtocolCards(protocols);
+            
+            await renderChart(currentProtocol);
+            
+            const alerts = await fetchAlerts();
+            renderAlerts(alerts);
+            
+            document.getElementById('lastUpdate').textContent = 
+                `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // Initialize
+        refreshData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>
